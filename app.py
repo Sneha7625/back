@@ -109,7 +109,6 @@ def login():
     return jsonify({"error": "Invalid credentials"}), 401
 
 @app.route('/protected', methods=['GET'])
-@jwt_required()
 def protected():
     return jsonify({"message": f"Hello, {get_jwt_identity()}"}), 200
 
@@ -199,7 +198,6 @@ def get_reviews():
 
 # ADD COMMENT
 @app.route("/add_comment", methods=["POST"])
-@jwt_required()
 def add_comment():
     data = request.json
     review_id, comment = data.get("reviewId"), data.get("comment")
@@ -211,7 +209,6 @@ def add_comment():
 
 
 @app.route('/profile', methods=['GET'])
-@jwt_required()
 def profile():
     current_user = get_jwt_identity()  # Get the email of the currently authenticated user
     user = users_collection.find_one({"email": current_user})
