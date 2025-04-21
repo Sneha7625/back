@@ -11,6 +11,7 @@ import smtplib
 from email.mime.text import MIMEText
 from dotenv import load_dotenv
 load_dotenv()
+from urllib.parse import quote_plus
 
 # Gemini API Configuration
 # Gemini API Configuration
@@ -19,11 +20,11 @@ gemini_model = genai.GenerativeModel('models/gemini-1.5-flash-002')
 
 from flask import Flask, render_template
 
-app = Flask(__name__, static_folder="static", template_folder="templates")
+app = Flask(__name__, static_folder="static", template_folder="frontend")
 
 @app.route("/")
 def home():
-    return render_template("index.html")  # or return "Hello from Flask!"
+    return  "Hello from Flask!"
 CORS(app)
 
 # JWT Configuration
@@ -32,16 +33,26 @@ bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 
 # MongoDB Configuration
-client = MongoClient("mongodb://localhost:27017/")
-db = client.travel_reviews
+# Get the MongoDB credentials from environment variables
+username = quote_plus(os.getenv("MONGODB_USERNAME"))
+password = quote_plus(os.getenv("MONGODB_PASSWORD"))
+dbname = os.getenv("MONGODB_DBNAME")
+
+# Construct the MongoDB URI
+mongodb_uri = f"mongodb+srv://{username}:{password}@cluster0.omu1azd.mongodb.net/{dbname}?retryWrites=true&w=majority"
+
+# Connect to MongoDB
+client = MongoClient(mongodb_uri)
+db = client[dbname]
 users_collection = db.users
 reviews_collection = db.reviews
 ratings_collection = db.ratings
 
 # Configure Upload Folder
-UPLOAD_FOLDER = "uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "uploads")  # Default to 'uploads' if not set
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+if not os.path.exists(app.config["UPLOAD_FOLDER"]):
+    os.makedirs(app.config["UPLOAD_FOLDER"])
 
 # USER AUTHENTICATION
 @app.route('/signup', methods=['POST'])
@@ -111,22 +122,33 @@ def get_uploaded_file(filename):
 # ADD REVIEW
 @app.route("/add_review", methods=["POST"])
 def add_review():
-    data = request.json
+    data = request.form
+    photos = request.files.getlist("photos[]")  # Use getlist to retrieve multiple files
+    image_urls = []
+
+    for photo in photos:
+        if photo:
+            # Save the file and generate a URL
+            filename = str(uuid.uuid4()) + os.path.splitext(photo.filename)[1]
+            path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+            photo.save(path)
+            image_urls.append(f"/uploads/{filename}")  # Construct the URL for the saved image
+
+    # Now you can save the review along with image_urls
     review = {
-        "Name": data["Name"],
-        "location": data["location"],
-        "purpose": data["purpose"],
-        "budget": data["budget"],
-        "transport": data["transport"],
-        "review": data["review"],
-        "images": data.get("photo_urls", []),
+        "Name": data.get("Name"),
+        "location": data.get("location"),
+        "purpose": data.get("purpose"),
+        "budget": data.get("budget"),
+        "transport": data.get("transport"),
+        "review": data.get("review"),
+        "images": image_urls,  # Save the image URLs
         "rating": 0,
         "rating_count": 0,
         "comments": []
     }
     reviews_collection.insert_one(review)
     return jsonify({"message": "Review added successfully!"}), 201
-
 # GET REVIEWS WITH FILTERS
 @app.route("/get_reviews", methods=["GET"])
 def get_reviews():
@@ -334,5 +356,8 @@ def send_message():
         return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
 
+import os
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Use Render's dynamic port and host (0.0.0.0)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
