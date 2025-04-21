@@ -12,6 +12,9 @@ from email.mime.text import MIMEText
 from dotenv import load_dotenv
 load_dotenv()
 from urllib.parse import quote_plus
+import ssl
+import certifi
+
 
 # Gemini API Configuration
 # Gemini API Configuration
@@ -38,7 +41,7 @@ from pymongo import MongoClient
 import certifi
 
 MONGO_URI = os.getenv("MONGODB_URI")
-client = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
+client = MongoClient(MONGO_URI, tls=True,tlsCAFile=certifi.where())
 db = client["travel_reviews"]
 users_collection = db.users
 reviews_collection = db.reviews
