@@ -53,6 +53,15 @@ UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "uploads")  # Default to 'uploads' if
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 if not os.path.exists(app.config["UPLOAD_FOLDER"]):
     os.makedirs(app.config["UPLOAD_FOLDER"])
+@app.route('/routes', methods=['GET'])
+def list_routes():
+    import urllib
+    output = []
+    for rule in app.url_map.iter_rules():
+        methods = ','.join(rule.methods)
+        line = urllib.parse.unquote(f"{rule.endpoint}: {rule.rule} [{methods}]")
+        output.append(line)
+    return "<br>".join(sorted(output))
 
 # USER AUTHENTICATION
 @app.route('/signup', methods=['POST'])
