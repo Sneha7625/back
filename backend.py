@@ -33,17 +33,13 @@ bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 
 # MongoDB Configuration
-# Get the MongoDB credentials from environment variables
-username = quote_plus(os.getenv("MONGODB_USERNAME"))
-password = quote_plus(os.getenv("MONGODB_PASSWORD"))
-dbname = os.getenv("MONGODB_DBNAME")
+import os
+from pymongo import MongoClient
+import certifi
 
-# Construct the MongoDB URI
-mongodb_uri = f"mongodb+srv://{username}:{password}@cluster0.omu1azd.mongodb.net/{dbname}?retryWrites=true&w=majority"
-
-# Connect to MongoDB
-client = MongoClient(mongodb_uri)
-db = client[dbname]
+MONGO_URI = os.getenv("MONGODB_URI")
+client = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
+db = client["travel_reviews"]
 users_collection = db.users
 reviews_collection = db.reviews
 ratings_collection = db.ratings
