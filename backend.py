@@ -62,6 +62,9 @@ def list_routes():
         output.append(line)
     return "<br>".join(sorted(output))
 
+@app.route('/my-endpoint', methods=['POST'])
+def my_endpoint():
+    return 'This is the POST response'
 
 # USER AUTHENTICATION
 @app.route('/signup', methods=['POST'])
