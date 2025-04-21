@@ -62,6 +62,15 @@ def list_routes():
         line = urllib.parse.unquote(f"{rule.endpoint}: {rule.rule} [{methods}]")
         output.append(line)
     return "<br>".join(sorted(output))
+@app.route('/routes', methods=['GET'])
+def list_routes():
+    import urllib
+    output = []
+    for rule in app.url_map.iter_rules():
+        methods = ','.join(rule.methods)
+        line = urllib.parse.unquote(f"{rule.rule} [{methods}]")
+        output.append(line)
+    return "<br>".join(sorted(output))
 
 # USER AUTHENTICATION
 @app.route('/signup', methods=['POST'])
