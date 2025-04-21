@@ -62,15 +62,7 @@ def list_routes():
         line = urllib.parse.unquote(f"{rule.endpoint}: {rule.rule} [{methods}]")
         output.append(line)
     return "<br>".join(sorted(output))
-@app.route('/routes', methods=['GET'])
-def list_routes():
-    import urllib
-    output = []
-    for rule in app.url_map.iter_rules():
-        methods = ','.join(rule.methods)
-        line = urllib.parse.unquote(f"{rule.rule} [{methods}]")
-        output.append(line)
-    return "<br>".join(sorted(output))
+
 
 # USER AUTHENTICATION
 @app.route('/signup', methods=['POST'])
@@ -372,6 +364,15 @@ def send_message():
     except Exception as e:
         app.logger.error(f"Error sending message: {e}")
         return jsonify({"error": f"Internal server error: {str(e)}"}), 500
+@app.route('/debug_routes', methods=['GET'])
+def debug_routes_view():
+    import urllib
+    output = []
+    for rule in app.url_map.iter_rules():
+        methods = ','.join(rule.methods)
+        line = urllib.parse.unquote(f"{rule.rule} [{methods}]")
+        output.append(line)
+    return "<br>".join(sorted(output))
 
 
 import os
